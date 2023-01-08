@@ -31,3 +31,9 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
+
+app.get("/urls/:id", (req, res) =>{
+  const shortURL = req.params.id // params help us to pull information from our request, in this case we are requesting the ID from the URL
+  const templateVars = { id: shortURL, longURL: urlDatabase[shortURL] }
+  res.render("urls_show", templateVars);
+})
