@@ -1,11 +1,21 @@
 const express = require('express')
+//const bodyParser = require('body-parser');
 const app = express();
 const PORT = 8080;
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
-function generateRandomString() {};
+//generateRandomString(6)
+function generateRandomString(string_length) {
+let randomString = "";
+let characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
+for(let i = 0; i < string_length; i++){
+  randomString += characters.charAt(Math.floor(Math.random() * characters.length))
+}
+return randomString
+}
+
 const urlDatabase = {
 
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -46,6 +56,17 @@ app.get("/urls/:id", (req, res) =>{
 })
 
 app.post("/urls", (req, res) => {
-  console.log(req.body)//Log the POST request body to the console
-  res.send("Ok"); //Respong with ok
+  const longURL = req.body.longURL
+  const newShortId = generateRandomString(6);
+  urlDatabase[newShortId] = longURL;
+  res.redirect(`/urls/${newShortId}`);
+  //console.log(longURL)//Log the POST request body to the console
+  //res.send("Ok"); //Respong with ok
 })
+
+app.get("/u/:id", (req, res) => {
+  const shortURL = req.params.id;
+  const longURL = urlDatabase[shortURL];
+  //console.log(longURL)
+  res.redirect(longURL);
+});
