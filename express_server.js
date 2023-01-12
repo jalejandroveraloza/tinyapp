@@ -70,3 +70,10 @@ app.get("/u/:id", (req, res) => {
   //console.log(longURL)
   res.redirect(longURL);
 });
+
+app.post("/urls/:id/delete",(req, res) =>{
+  const shortURL = req.params.id;
+  
+  delete urlDatabase[shortURL];
+  res.redirect("/urls")
+})
