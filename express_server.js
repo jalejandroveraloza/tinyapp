@@ -1,8 +1,13 @@
 const express = require('express')
+const morgan = require('morgan')
+const cookieParser = require('cookie-parser');
 //const bodyParser = require('body-parser');
 const app = express();
 const PORT = 8080;
 
+//Middlewares
+app.use(morgan('dev'));
+app.use(cookieParser());
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
@@ -40,18 +45,28 @@ app.get('/hello', (req, res) => {
 })
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = {
+    username: req.cookies["username"],
+    urls: urlDatabase
+  }
+  
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"],
+  }
 
-  res.render("urls_new");
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) =>{
   const shortURL = req.params.id // params help us to pull information from our request, in this case we are requesting the ID from the URL
-  const templateVars = { id: shortURL, longURL: urlDatabase[shortURL] }
+  const templateVars = { 
+    sername: req.cookies["username"],
+    id: shortURL, longURL: urlDatabase[shortURL] 
+  }
   res.render("urls_show", templateVars);
 })
 
@@ -85,4 +100,18 @@ app.post("/urls/:id/delete",(req, res) =>{
   const shortURL = req.params.id;
   delete urlDatabase[shortURL];
   res.redirect("/urls")
+})
+
+app.post("/login", (req, res) =>{
+ 
+res.cookie('username', req.body.username)
+res.redirect("/urls");
+
+
+})
+
+app.post("/logout", (req, res)=>{
+  res.clearCookie("username");
+  res.redirect('/urls');
+  
 })
