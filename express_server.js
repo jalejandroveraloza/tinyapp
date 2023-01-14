@@ -21,6 +21,33 @@ for(let i = 0; i < string_length; i++){
 return randomString
 }
 
+const userLookup = (email) => {
+  // const userID = req.cookies["user_id"];
+  // const user = users[userID];
+  // const currentEmail = user.email;
+  // let message = null;
+  for( let user in users ){
+    if(users[user].email === email){
+      return users[user]
+    }
+  }
+  return {};
+}
+//user database
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+
+}
+
 const urlDatabase = {
 
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -45,17 +72,24 @@ app.get('/hello', (req, res) => {
 })
 
 app.get("/urls", (req, res) => {
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+
   const templateVars = {
-    username: req.cookies["username"],
-    urls: urlDatabase
+    username: user.email,
+    urls: urlDatabase,
+    user
   }
   
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+
   const templateVars = {
-    username: req.cookies["username"],
+    username: user.email,
   }
 
   res.render("urls_new", templateVars);
@@ -63,11 +97,42 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) =>{
   const shortURL = req.params.id // params help us to pull information from our request, in this case we are requesting the ID from the URL
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+
   const templateVars = { 
-    sername: req.cookies["username"],
+    username: user.email,
     id: shortURL, longURL: urlDatabase[shortURL] 
   }
   res.render("urls_show", templateVars);
+})
+
+app.get("/register", (req, res) => {
+  res.render("urls_register")
+})
+
+app.post("/register", (req, res) => {
+
+  const email = req.body.email;
+  const password = req.body.password;
+  const userID = generateRandomString(6)
+  
+
+  if (email === ""|| password === ""){
+    res.sendStatus(400)
+    
+  } else if (email === userLookup(email).email){
+    res.sendStatus(400)
+  }
+
+  users[userID] = {
+    id : userID,
+    email,
+    password
+  };
+  res.cookie("user_id",userID)
+  console.log(users)
+  res.redirect('/urls');
 })
 
 app.post("/urls", (req, res) => {
@@ -112,6 +177,6 @@ res.redirect("/urls");
 
 app.post("/logout", (req, res)=>{
   res.clearCookie("username");
-  res.redirect('/urls');
+  res.redirect('/register');
   
 })
