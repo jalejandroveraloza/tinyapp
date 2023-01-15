@@ -108,8 +108,26 @@ app.get("/urls/:id", (req, res) =>{
 })
 
 app.get("/register", (req, res) => {
-  res.render("urls_register")
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+
+  const templateVars = { 
+    username: undefined
+  }
+  res.render("urls_register", templateVars)
 })
+
+app.get("/login", (req, res) => {
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+
+  const templateVars = { 
+    username: undefined
+  }
+  res.render("urls_login", templateVars)
+})
+
+
 
 app.post("/register", (req, res) => {
 
@@ -119,10 +137,10 @@ app.post("/register", (req, res) => {
   
 
   if (email === ""|| password === ""){
-    res.sendStatus(400)
+    return res.sendStatus(400)
     
   } else if (email === userLookup(email).email){
-    res.sendStatus(400)
+    return res.sendStatus(400)
   }
 
   users[userID] = {
@@ -168,15 +186,18 @@ app.post("/urls/:id/delete",(req, res) =>{
 })
 
 app.post("/login", (req, res) =>{
- 
-res.cookie('username', req.body.username)
+  const user =userLookup(req.body.email)
+  if (req.body.email === user.email){
+    res.cookie("user_id", user.id);
+  }
+//res.cookie('username', req.body.username)
 res.redirect("/urls");
 
 
 })
 
 app.post("/logout", (req, res)=>{
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect('/register');
   
 })
