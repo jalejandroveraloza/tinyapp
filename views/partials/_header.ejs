@@ -20,21 +20,18 @@
       
     </div>
     <div>
-      <% if(username) { %>
-       <form method="post" action="/logout">
-        <%= username %>
+      
+
+      <% if(useremail) { %>
+        <form method="post" action="/logout">
+        <%= useremail %>
         <button type="submit">Logout</button>
-        
-        
-        
-       <%} else {%>
-
-      <form method = "post" action = "/login">
-        <input type = "text" name = "username"/>
-        <button type = "submit">Login</button>
-
       </form>
-      <% } %>
+        <% } else { %>
+      <h5><a href="/login">Login</a></h5>
+      <h5><a href="/register">Register</a></h5>  
+        <% } %>
+        
 
     </div>
   </nav>
