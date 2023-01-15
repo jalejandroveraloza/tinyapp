@@ -1,8 +1,13 @@
 const express = require('express')
+const morgan = require('morgan')
+const cookieParser = require('cookie-parser');
 //const bodyParser = require('body-parser');
 const app = express();
 const PORT = 8080;
 
+//Middlewares
+app.use(morgan('dev'));
+app.use(cookieParser());
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
@@ -14,6 +19,33 @@ for(let i = 0; i < string_length; i++){
   randomString += characters.charAt(Math.floor(Math.random() * characters.length))
 }
 return randomString
+}
+
+const userLookup = (email) => {
+  // const userID = req.cookies["user_id"];
+  // const user = users[userID];
+  // const currentEmail = user.email;
+  // let message = null;
+  for( let user in users ){
+    if(users[user].email === email){
+      return users[user]
+    }
+  }
+  return {};
+}
+//user database
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+
 }
 
 const urlDatabase = {
@@ -40,24 +72,120 @@ app.get('/hello', (req, res) => {
 })
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+
+  const templateVars = {
+    useremail: user.email,
+    urls: urlDatabase,
+    user
+  }
+  
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+  if(userID){
 
-  res.render("urls_new");
+    const templateVars = {
+      useremail: user.email,
+    }
+  
+    res.render("urls_new", templateVars);
+  } else{
+    res.redirect("/login");
+  }
+
+  
 });
 
 app.get("/urls/:id", (req, res) =>{
   const shortURL = req.params.id // params help us to pull information from our request, in this case we are requesting the ID from the URL
-  const templateVars = { id: shortURL, longURL: urlDatabase[shortURL] }
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+
+  if(!urlDatabase[shortURL]){
+    //console.log(urlDatabase[shortURL])
+    
+   return res.sendStatus(404)
+
+  }
+
+  const templateVars = { 
+    useremail: user.email,
+    id: shortURL, longURL: urlDatabase[shortURL] 
+  }
   res.render("urls_show", templateVars);
 })
 
+app.get("/register", (req, res) => {
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+
+  if(userID){
+    res.redirect("/urls")
+  } else{
+
+  const templateVars = { 
+    useremail: undefined
+  }
+  res.render("urls_register", templateVars)
+}
+})
+
+app.get("/login", (req, res) => {
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+  if(userID){
+    res.redirect("/urls")
+  } else{
+
+  const templateVars = { 
+    useremail: undefined
+  }
+  res.render("urls_login", templateVars)
+}
+})
+
+
+
+app.post("/register", (req, res) => {
+  
+  const email = req.body.email;
+  const password = req.body.password;
+  const userID = generateRandomString(6)
+  
+
+  if (email === ""|| password === ""){
+    return res.sendStatus(400)
+    
+  } else if (email === userLookup(email).email){
+    return res.sendStatus(400)
+  }
+
+  users[userID] = {
+    id : userID,
+    email,
+    password
+  };
+  res.cookie("user_id",userID)
+  console.log(users)
+  res.redirect('/urls');
+
+})
+
 app.post("/urls", (req, res) => {
+  const userID = req.cookies["user_id"]
   const longURL = req.body.longURL
   const newShortId = generateRandomString(6);
+
+  if(!userID){
+   return res.status(400).send("you need to register or login")
+
+  }
+
   urlDatabase[newShortId] = longURL;
   res.redirect(`/urls/${newShortId}`);
   //console.log(longURL)//Log the POST request body to the console
@@ -85,4 +213,26 @@ app.post("/urls/:id/delete",(req, res) =>{
   const shortURL = req.params.id;
   delete urlDatabase[shortURL];
   res.redirect("/urls")
+})
+
+app.post("/login", (req, res) =>{
+  const email = req.body.email;
+  const password = req.body.password;
+  const user =userLookup(req.body.email)
+
+  if (email === user.email && password === user.password){
+    res.cookie("user_id", user.id);
+  } else {
+    return res.sendStatus(403)
+  }
+//res.cookie('username', req.body.username)
+res.redirect("/urls");
+
+
+})
+
+app.post("/logout", (req, res)=>{
+  res.clearCookie("user_id");
+  res.redirect('/login');
+  
 })
