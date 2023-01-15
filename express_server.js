@@ -76,7 +76,7 @@ app.get("/urls", (req, res) => {
   const user = users[userID];
 
   const templateVars = {
-    username: user.email,
+    useremail: user.email,
     urls: urlDatabase,
     user
   }
@@ -89,7 +89,7 @@ app.get("/urls/new", (req, res) => {
   const user = users[userID];
 
   const templateVars = {
-    username: user.email,
+    useremail: user.email,
   }
 
   res.render("urls_new", templateVars);
@@ -101,7 +101,7 @@ app.get("/urls/:id", (req, res) =>{
   const user = users[userID];
 
   const templateVars = { 
-    username: user.email,
+    useremail: user.email,
     id: shortURL, longURL: urlDatabase[shortURL] 
   }
   res.render("urls_show", templateVars);
@@ -112,7 +112,7 @@ app.get("/register", (req, res) => {
   const user = users[userID];
 
   const templateVars = { 
-    username: undefined
+    useremail: undefined
   }
   res.render("urls_register", templateVars)
 })
@@ -122,7 +122,7 @@ app.get("/login", (req, res) => {
   const user = users[userID];
 
   const templateVars = { 
-    username: undefined
+    useremail: undefined
   }
   res.render("urls_login", templateVars)
 })
@@ -186,9 +186,14 @@ app.post("/urls/:id/delete",(req, res) =>{
 })
 
 app.post("/login", (req, res) =>{
+  const email = req.body.email;
+  const password = req.body.password;
   const user =userLookup(req.body.email)
-  if (req.body.email === user.email){
+
+  if (email === user.email && password === user.password){
     res.cookie("user_id", user.id);
+  } else {
+    return res.sendStatus(403)
   }
 //res.cookie('username', req.body.username)
 res.redirect("/urls");
@@ -198,6 +203,6 @@ res.redirect("/urls");
 
 app.post("/logout", (req, res)=>{
   res.clearCookie("user_id");
-  res.redirect('/register');
+  res.redirect('/login');
   
 })
