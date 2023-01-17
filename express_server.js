@@ -1,6 +1,7 @@
 const express = require('express')
 const morgan = require('morgan')
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 //const bodyParser = require('body-parser');
 const app = express();
 const PORT = 8080;
@@ -10,6 +11,9 @@ app.use(morgan('dev'));
 app.use(cookieParser());
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
+
+const saltRounds = 10;
+const salt = bcrypt.genSaltSync(saltRounds);
 
 //generateRandomString(6)
 function generateRandomString(string_length) {
@@ -196,7 +200,7 @@ app.post("/register", (req, res) => {
   users[userID] = {
     id : userID,
     email,
-    password
+    password: bcrypt.hashSync(password, salt)
   };
   res.cookie("user_id",userID)
   console.log(users)
@@ -262,7 +266,7 @@ app.post("/login", (req, res) =>{
   const password = req.body.password;
   const user =userLookup(req.body.email)
 
-  if (email === user.email && password === user.password){
+  if (email === user.email && bcrypt.compareSync(password, user.password)){
     res.cookie("user_id", user.id);
   } else {
     return res.sendStatus(403)
