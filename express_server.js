@@ -33,6 +33,17 @@ const userLookup = (email) => {
   }
   return {};
 }
+
+const urlsForUserid = (id) =>{
+  //const newShortId = generateRandomString(6);
+  const userUrls = {};
+  for(let urlID in urlDatabase){
+    if(urlDatabase[urlID].userID === id){
+      userUrls[urlID] = urlDatabase[urlID]
+    }
+    console.log(userUrls)
+  } return userUrls
+}
 //user database
 const users = {
   userRandomID: {
@@ -85,13 +96,17 @@ app.get("/urls", (req, res) => {
   const userID = req.cookies["user_id"];
   const user = users[userID];
 
+  if(userID){
   const templateVars = {
     useremail: user.email,
-    urls: urlDatabase,
+    urls: urlsForUserid(userID),
     user
   }
   
   res.render("urls_index", templateVars);
+} else {
+  return res.sendStatus(401)
+}
 });
 
 app.get("/urls/new", (req, res) => {
@@ -115,7 +130,7 @@ app.get("/urls/:id", (req, res) =>{
   const shortURL = req.params.id // params help us to pull information from our request, in this case we are requesting the ID from the URL
   const userID = req.cookies["user_id"];
   const user = users[userID];
-
+  if(userID){
   if(!urlDatabase[shortURL]){
     //console.log(urlDatabase[shortURL])
     
@@ -128,6 +143,9 @@ app.get("/urls/:id", (req, res) =>{
     id: shortURL, longURL: urlDatabase[shortURL].longURL// line changed because the database changed, done!!!
   }
   res.render("urls_show", templateVars);
+} else {
+  return res.sendStatus(401)
+}
 })
 
 app.get("/register", (req, res) => {
@@ -214,19 +232,29 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) =>{
+  const userID = req.cookies["user_id"];
   const shortURL = req.params.id
   const newlongURL = req.body.updatedURL
 
+  if(userID){
   urlDatabase[shortURL].longURL = newlongURL; // line changed because the database changed, done
 
   res.redirect('/urls')
+  } else {
+    return res.sendStatus(401)
+  }
 
 })
 
 app.post("/urls/:id/delete",(req, res) =>{
+  const userID = req.cookies["user_id"];
   const shortURL = req.params.id;
+  if(userID){
   delete urlDatabase[shortURL];
   res.redirect("/urls")
+  } else {
+    return res.sendStatus(401)
+  }
 })
 
 app.post("/login", (req, res) =>{
