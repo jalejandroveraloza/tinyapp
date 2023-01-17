@@ -49,10 +49,20 @@ const users = {
 }
 
 const urlDatabase = {
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
+};
+/*const urlDatabase = {
 
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
-};
+};*/
 
 app.get('/',(req, res) =>{
 
@@ -87,12 +97,18 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userID = req.cookies["user_id"];
   const user = users[userID];
+  if(userID){
 
-  const templateVars = {
-    useremail: user.email,
+    const templateVars = {
+      useremail: user.email,
+    }
+  
+    res.render("urls_new", templateVars);
+  } else{
+    res.redirect("/login");
   }
 
-  res.render("urls_new", templateVars);
+  
 });
 
 app.get("/urls/:id", (req, res) =>{
@@ -100,9 +116,16 @@ app.get("/urls/:id", (req, res) =>{
   const userID = req.cookies["user_id"];
   const user = users[userID];
 
+  if(!urlDatabase[shortURL]){
+    //console.log(urlDatabase[shortURL])
+    
+   return res.sendStatus(404)
+
+  }
+
   const templateVars = { 
     useremail: user.email,
-    id: shortURL, longURL: urlDatabase[shortURL] 
+    id: shortURL, longURL: urlDatabase[shortURL].longURL// line changed because the database changed, done!!!
   }
   res.render("urls_show", templateVars);
 })
@@ -111,26 +134,35 @@ app.get("/register", (req, res) => {
   const userID = req.cookies["user_id"];
   const user = users[userID];
 
+  if(userID){
+    res.redirect("/urls")
+  } else{
+
   const templateVars = { 
     useremail: undefined
   }
   res.render("urls_register", templateVars)
+}
 })
 
 app.get("/login", (req, res) => {
   const userID = req.cookies["user_id"];
   const user = users[userID];
+  if(userID){
+    res.redirect("/urls")
+  } else{
 
   const templateVars = { 
     useremail: undefined
   }
   res.render("urls_login", templateVars)
+}
 })
 
 
 
 app.post("/register", (req, res) => {
-
+  
   const email = req.body.email;
   const password = req.body.password;
   const userID = generateRandomString(6)
@@ -154,9 +186,21 @@ app.post("/register", (req, res) => {
 })
 
 app.post("/urls", (req, res) => {
+  const userID = req.cookies["user_id"]
   const longURL = req.body.longURL
   const newShortId = generateRandomString(6);
-  urlDatabase[newShortId] = longURL;
+
+  if(!userID){
+   return res.status(400).send("you need to register or login")
+
+  }
+
+  //urlDatabase[newShortId].longURL = longURL; // line changed because the database changed, done
+  urlDatabase[newShortId] = {
+    longURL,
+    userID: userID
+  };
+  console.log(urlDatabase);
   res.redirect(`/urls/${newShortId}`);
   //console.log(longURL)//Log the POST request body to the console
   //res.send("Ok"); //Respong with ok
@@ -164,7 +208,7 @@ app.post("/urls", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
-  const longURL = urlDatabase[shortURL];
+  const longURL = urlDatabase[shortURL].longURL; // line changed because the database changed, done
   //console.log(longURL)
   res.redirect(longURL);
 });
@@ -173,7 +217,7 @@ app.post("/urls/:id", (req, res) =>{
   const shortURL = req.params.id
   const newlongURL = req.body.updatedURL
 
-  urlDatabase[shortURL] = newlongURL;
+  urlDatabase[shortURL].longURL = newlongURL; // line changed because the database changed, done
 
   res.redirect('/urls')
 
