@@ -1,6 +1,7 @@
 const express = require('express')
 const morgan = require('morgan')
 const cookieParser = require('cookie-parser');
+const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 //const bodyParser = require('body-parser');
 const app = express();
@@ -8,9 +9,14 @@ const PORT = 8080;
 
 //Middlewares
 app.use(morgan('dev'));
-app.use(cookieParser());
+//app.use(cookieParser());
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ["a quick yellow chicken", "jumps over the lazy dog"]
+}))
 
 const saltRounds = 10;
 const salt = bcrypt.genSaltSync(saltRounds);
@@ -98,7 +104,7 @@ app.get('/hello', (req, res) => {
 })
 
 app.get("/urls", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id//req.cookies["user_id"];
   const user = users[userID];
 
   if(userID){
@@ -115,7 +121,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id//req.cookies["user_id"];
   const user = users[userID];
   if(userID){
 
@@ -133,7 +139,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) =>{
   const shortURL = req.params.id // params help us to pull information from our request, in this case we are requesting the ID from the URL
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id//req.cookies["user_id"];
   const user = users[userID];
   if(userID){
   if(!urlDatabase[shortURL]){
@@ -154,7 +160,7 @@ app.get("/urls/:id", (req, res) =>{
 })
 
 app.get("/register", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id//req.cookies["user_id"];
   const user = users[userID];
 
   if(userID){
@@ -169,7 +175,7 @@ app.get("/register", (req, res) => {
 })
 
 app.get("/login", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id//req.cookies["user_id"];
   const user = users[userID];
   if(userID){
     res.redirect("/urls")
@@ -203,13 +209,13 @@ app.post("/register", (req, res) => {
     email,
     password: bcrypt.hashSync(password, salt)
   };
-  res.cookie("user_id",userID)
+  req.session.user_id = userID; //res.cookie("user_id",userID)
   console.log(users)
   res.redirect('/urls');
 })
 
 app.post("/urls", (req, res) => {
-  const userID = req.cookies["user_id"]
+  const userID = req.session.user_id//req.cookies["user_id"]
   const longURL = req.body.longURL
   const newShortId = generateRandomString(6);
 
@@ -237,7 +243,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) =>{
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id//req.cookies["user_id"];
   const shortURL = req.params.id
   const newlongURL = req.body.updatedURL
 
@@ -252,7 +258,7 @@ app.post("/urls/:id", (req, res) =>{
 })
 
 app.post("/urls/:id/delete",(req, res) =>{
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id //req.cookies["user_id"];
   const shortURL = req.params.id;
   if(userID){
   delete urlDatabase[shortURL];
@@ -268,7 +274,7 @@ app.post("/login", (req, res) =>{
   const user =userLookup(req.body.email)
 
   if (email === user.email && bcrypt.compareSync(password, user.password)){
-    res.cookie("user_id", user.id);
+    req.session.user_id = user.id;//res.cookie("user_id", user.id);
   } else {
     return res.sendStatus(403)
   }
@@ -279,7 +285,7 @@ res.redirect("/urls");
 })
 
 app.post("/logout", (req, res)=>{
-  res.clearCookie("user_id");
+  req.session = null //res.clearCookie("user_id");
   res.redirect('/login');
   
 })
