@@ -34,7 +34,14 @@ for(let i = 0; i < string_length; i++){
 return randomString
 }
 
-
+const userLookup = (email) => {
+  for( let user in users ){
+    if(users[user].email === email){
+      return users[user]
+    }
+  }
+  return {};
+}
 
 const urlsForUserid = (id) =>{
   //const newShortId = generateRandomString(6);
@@ -98,6 +105,7 @@ app.get('/hello', (req, res) => {
 app.get("/urls", (req, res) => {
   const userID = req.session.user_id//req.cookies["user_id"];
   const user = users[userID];
+
 
   if(userID){
   const templateVars = {
@@ -265,7 +273,7 @@ app.post("/login", (req, res) =>{
   const password = req.body.password;
   const user =getUserByEmail(req.body.email, users)
 
-  if (email === user.email && bcrypt.compareSync(password, user.password)){
+  if (email === user.email && bcrypt.compareSync(password, userLookup(email).password)){
     req.session.user_id = user.id;//res.cookie("user_id", user.id);
   } else {
     return res.sendStatus(403)
