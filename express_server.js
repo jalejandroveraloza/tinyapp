@@ -4,10 +4,13 @@ const cookieParser = require('cookie-parser');
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 //const bodyParser = require('body-parser');
+const getUserByEmail = require('./helper');
 const app = express();
 const PORT = 8080;
 
+
 //Middlewares
+
 app.use(morgan('dev'));
 //app.use(cookieParser());
 app.set("view engine", "ejs");
@@ -31,18 +34,7 @@ for(let i = 0; i < string_length; i++){
 return randomString
 }
 
-const userLookup = (email) => {
-  // const userID = req.cookies["user_id"];
-  // const user = users[userID];
-  // const currentEmail = user.email;
-  // let message = null;
-  for( let user in users ){
-    if(users[user].email === email){
-      return users[user]
-    }
-  }
-  return {};
-}
+
 
 const urlsForUserid = (id) =>{
   //const newShortId = generateRandomString(6);
@@ -200,7 +192,7 @@ app.post("/register", (req, res) => {
   if (email === ""|| password === ""){
     return res.sendStatus(400)
     
-  } else if (email === userLookup(email).email){
+  } else if (email === getUserByEmail(email, users).email){
     return res.sendStatus(400)
   }
 
@@ -271,7 +263,7 @@ app.post("/urls/:id/delete",(req, res) =>{
 app.post("/login", (req, res) =>{
   const email = req.body.email;
   const password = req.body.password;
-  const user =userLookup(req.body.email)
+  const user =getUserByEmail(req.body.email, users)
 
   if (email === user.email && bcrypt.compareSync(password, user.password)){
     req.session.user_id = user.id;//res.cookie("user_id", user.id);
